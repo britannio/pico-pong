@@ -32,6 +32,10 @@ bool ballTask();
 bool userPaddleTask();
 bool aiPaddleTask();
 bool accelerometerTask();
+void paintBall();
+void paintAiPaddle();
+void paintUserPaddle();
+void paintDivider();
 
 static int cursorPos = 0;
 
@@ -46,8 +50,13 @@ volatile bool aiPaddleDirty = true;
 volatile bool lineDirty = true;
 
 // 0 to 70
-volatile int userPaddleY = 0;
-volatile int aiPaddleY = 35;
+volatile uint16_t userPaddleY = 0;
+volatile uint16_t aiPaddleY = 35;
+
+volatile uint16_t ballX = 80;
+volatile uint16_t ballY = 35;
+volatile uint16_t prevBallX = 80;
+volatile uint16_t prevBallY = 35;
 
 int main()
 {
@@ -106,42 +115,22 @@ void startGame()
 
 bool repaintTask()
 {
+  paintBall();
   if (userPaddleDirty)
   {
     userPaddleDirty = false;
-    // Clear paddle area
-    ST7735_FillRectangle(0, 0, ST7735_WIDTH, PADDLE_WIDTH, ST7735_BLACK);
-    // Paint user paddle
-    ST7735_FillRectangle(
-        ST7735_WIDTH - PADDLE_HEIGHT - userPaddleY,
-        0,
-        PADDLE_HEIGHT,
-        PADDLE_WIDTH,
-        ST7735_YELLOW);
+    paintUserPaddle();
   }
   if (aiPaddleDirty)
   {
     aiPaddleDirty = false;
-    // Clear paddle area
-    const uint16_t y = ST7735_HEIGHT - PADDLE_WIDTH;
-    ST7735_FillRectangle(0, y, ST7735_WIDTH, PADDLE_WIDTH, ST7735_BLACK);
-    // paint ai paddle
-    ST7735_FillRectangle(
-        ST7735_WIDTH - PADDLE_HEIGHT - aiPaddleY,
-        ST7735_HEIGHT - PADDLE_WIDTH,
-        PADDLE_HEIGHT,
-        PADDLE_WIDTH,
-        ST7735_YELLOW);
+    paintAiPaddle();
   }
   if (lineDirty)
   {
-    // paint vertical line to split screen
-    lineDirty = false;
-    // Line to split the screen
-    paintHorizontalLine(ST7735_HEIGHT / 2, 0, ST7735_WIDTH, ST7735_WHITE);
+    // lineDirty = false;
+    paintDivider();
   }
-  // paint ball
-
   return true;
 }
 
@@ -195,6 +184,57 @@ bool accelerometerTask()
   }
 
   return true;
+}
+
+void paintUserPaddle()
+{
+  // Clear paddle area
+  ST7735_FillRectangle(0, 0, ST7735_WIDTH, PADDLE_WIDTH, ST7735_BLACK);
+  // Paint user paddle
+  ST7735_FillRectangle(
+      ST7735_WIDTH - PADDLE_HEIGHT - userPaddleY,
+      0,
+      PADDLE_HEIGHT,
+      PADDLE_WIDTH,
+      ST7735_YELLOW);
+}
+
+void paintAiPaddle()
+{
+  // Clear paddle area
+  const uint16_t y = ST7735_HEIGHT - PADDLE_WIDTH;
+  ST7735_FillRectangle(0, y, ST7735_WIDTH, PADDLE_WIDTH, ST7735_BLACK);
+  // paint ai paddle
+  ST7735_FillRectangle(
+      ST7735_WIDTH - PADDLE_HEIGHT - aiPaddleY,
+      ST7735_HEIGHT - PADDLE_WIDTH,
+      PADDLE_HEIGHT,
+      PADDLE_WIDTH,
+      ST7735_YELLOW);
+}
+
+void paintBall()
+{
+  // Clear previous ball position
+  ST7735_FillRectangle(
+      ST7735_WIDTH - BALL_SIZE - prevBallY,
+      prevBallX,
+      BALL_SIZE,
+      BALL_SIZE,
+      ST7735_BLACK);
+  // Paint ball
+  ST7735_FillRectangle(
+      ST7735_WIDTH - BALL_SIZE - ballY,
+      ballX,
+      BALL_SIZE,
+      BALL_SIZE,
+      ST7735_GREEN);
+}
+
+void paintDivider()
+{
+  // Line to split the screen
+  paintHorizontalLine(ST7735_HEIGHT / 2, 0, ST7735_WIDTH, ST7735_WHITE);
 }
 
 // This method is invoked when the button is pressed.

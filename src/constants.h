@@ -10,5 +10,7 @@
 #define PADDLE_HEIGHT 30
 #define MAX_PADDLE_Y (ST7735_WIDTH - PADDLE_HEIGHT)
 
+#define BALL_SIZE 5
+
 // Hardware
 #define BUTTON_GPIO 21
