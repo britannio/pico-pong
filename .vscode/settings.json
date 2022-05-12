@@ -1,0 +1,23 @@
+{
+  "cmake.configureOnOpen": false,
+  "cmake.statusbar.advanced": {
+    "debug" : {
+      "visibility": "hidden"
+              },    "launch" : {
+      "visibility": "hidden"
+               },
+    "build" : {
+      "visibility": "hidden"
+               },
+    "buildTarget" : {
+      "visibility": "hidden"
+               },
+    },
+    "files.associations": {
+      "stdlib.h": "c",
+      "fonts.h": "c",
+      "multicore.h": "c",
+      "st7735.h": "c",
+      "time.h": "c"
+    },
+}
