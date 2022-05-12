@@ -57,6 +57,8 @@ volatile uint16_t ballX = 80;
 volatile uint16_t ballY = 35;
 volatile uint16_t prevBallX = 80;
 volatile uint16_t prevBallY = 35;
+volatile int ballMagnitudeX = 1;
+volatile int ballMagnitudeY = 1;
 
 int main()
 {
@@ -136,6 +138,16 @@ bool repaintTask()
 
 bool ballTask()
 {
+  // Colission detect with edges
+  // Save the current position so it can be efficiently erased
+  prevBallX = ballX;
+  prevBallY = ballY;
+
+  const uint16_t ballStep = 1;
+
+  ballX += ballStep * ballMagnitudeX;
+  ballY += ballStep * ballMagnitudeY;
+
   return true;
 }
 
