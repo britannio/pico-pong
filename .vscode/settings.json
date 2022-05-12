@@ -18,6 +18,7 @@
       "fonts.h": "c",
       "multicore.h": "c",
       "st7735.h": "c",
-      "time.h": "c"
+      "time.h": "c",
+      "constants.h": "c"
     },
 }
