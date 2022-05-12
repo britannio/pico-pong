@@ -95,11 +95,10 @@ void startGame()
   // Timers
   // ---------------------------------------------------------------------------
   const int32_t tick = -16;
-
   add_repeating_timer_ms(tick, repaintTask, NULL, &repaintTimer);
   add_repeating_timer_ms(tick, ballTask, NULL, &ballTimer);
   add_repeating_timer_ms(tick, userPaddleTask, NULL, &userPaddleTimer);
-  add_repeating_timer_ms(tick * 4, aiPaddleTask, NULL, &aiPaddleTimer);
+  add_repeating_timer_ms(tick * 3, aiPaddleTask, NULL, &aiPaddleTimer);
 
   while (true)
     tight_loop_contents();
@@ -246,8 +245,20 @@ void restartGame()
 
 void paintUserPaddle()
 {
-  // Clear paddle area
-  ST7735_FillRectangle(0, 0, ST7735_WIDTH, PADDLE_WIDTH, ST7735_BLACK);
+  // Clear area above paddle
+  ST7735_FillRectangle(
+      ST7735_WIDTH - userPaddleY,
+      0,
+      userPaddleY,
+      PADDLE_WIDTH,
+      ST7735_BLACK);
+  // Clear area below paddle
+  ST7735_FillRectangle(
+      0,
+      0,
+      ST7735_WIDTH - userPaddleY - ST7735_WIDTH,
+      PADDLE_WIDTH,
+      ST7735_BLACK);
   // Paint user paddle
   ST7735_FillRectangle(
       ST7735_WIDTH - PADDLE_HEIGHT - userPaddleY,
@@ -297,5 +308,3 @@ void paintDivider()
     ST7735_DrawPixel(x, ST7735_HEIGHT / 2, ST7735_WHITE);
   }
 }
-
-
