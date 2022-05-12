@@ -139,6 +139,17 @@ bool repaintTask()
 bool ballTask()
 {
   // Colission detect with edges
+  if (ballY + BALL_SIZE >= ST7735_WIDTH || ballY <= 0)
+  {
+    // Ball is at top or bottom so change its direction
+    ballMagnitudeY = -ballMagnitudeY;
+  }
+  if (ballX <= PADDLE_WIDTH || ballX + BALL_SIZE >= ST7735_HEIGHT - PADDLE_WIDTH)
+  {
+    // Ball is at left or right edge so change its direction
+    ballMagnitudeX = -ballMagnitudeX;
+  }
+
   // Save the current position so it can be efficiently erased
   prevBallX = ballX;
   prevBallY = ballY;
@@ -173,7 +184,7 @@ bool accelerometerTask()
 
   // Down = +x
   printf("x: %.2f\n", x);
-  const float threshold = 0.4;
+  const float threshold = 0.3;
 
   const bool atTop = userPaddleY <= 0;
   const bool atBottom = userPaddleY >= MAX_PADDLE_Y;
