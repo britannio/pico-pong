@@ -4,8 +4,6 @@
 #include "pico/time.h"
 #include "lib/fonts.h"
 #include "lib/st7735.h"
-#include "painting.h"
-#include "constants.h"
 #include "lib/ICM20948.h"
 #include "pico/multicore.h"
 
@@ -21,16 +19,18 @@ void paintAiPaddle();
 void paintUserPaddle();
 void paintDivider();
 
+#define PADDLE_WIDTH 10
+#define PADDLE_HEIGHT 30
+#define MAX_PADDLE_Y (ST7735_WIDTH - PADDLE_HEIGHT)
+#define BALL_SIZE 5
+
 // Components should only be repainted if they have changed in some way.
 // These flags track this.
 volatile bool userPaddleDirty = true;
 volatile bool aiPaddleDirty = true;
-volatile bool lineDirty = true;
 
-// 0 to MAX_PADDLE_Y
 volatile uint16_t userPaddleY = 0;
 volatile uint16_t aiPaddleY = 35;
-
 volatile uint16_t ballX = 80;
 volatile uint16_t ballY = 35;
 volatile uint16_t prevBallX = 80;
@@ -51,7 +51,7 @@ int main()
   sleep_ms(1000);
   // Initialise the screen
   ST7735_Init();
-  clearScreen();
+  ST7735_FillScreen(ST7735_BLACK);
 
   // INITIALISE ACCELEROMETER (https://github.com/plaaosert/icm20948-guide)
   // ---------------------------------------------------------------------------
@@ -93,7 +93,6 @@ void startGame()
 
 bool repaintTask()
 {
-  paintBall();
   if (userPaddleDirty)
   {
     userPaddleDirty = false;
@@ -104,11 +103,8 @@ bool repaintTask()
     aiPaddleDirty = false;
     paintAiPaddle();
   }
-  if (lineDirty)
-  {
-    // lineDirty = false;
-    paintDivider();
-  }
+  paintDivider();
+  paintBall();
   return true;
 }
 
@@ -137,8 +133,6 @@ bool ballTask()
 
   return true;
 }
-
-
 
 bool aiPaddleTask()
 {
@@ -250,7 +244,10 @@ void paintBall()
 void paintDivider()
 {
   // Line to split the screen
-  paintHorizontalLine(ST7735_HEIGHT / 2, 0, ST7735_WIDTH, ST7735_WHITE);
+  for (uint16_t x = 0; x <= ST7735_WIDTH; x++)
+  {
+    ST7735_DrawPixel(x, ST7735_HEIGHT / 2, ST7735_WHITE);
+  }
 }
 
 void paintGameOverText()

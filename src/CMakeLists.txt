@@ -1,6 +1,5 @@
 add_executable(pong
         main.c
-        painting.c
         lib/fonts.c
         lib/st7735.c
         lib/DEV_Config.c
