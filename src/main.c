@@ -169,6 +169,28 @@ bool userPaddleTask()
 
 bool aiPaddleTask()
 {
+  uint16_t paddleCenterY = aiPaddleY + (PADDLE_HEIGHT / 2);
+  uint16_t ballCenterY = ballY + (BALL_SIZE / 2);
+  int delta = paddleCenterY - ballCenterY;
+
+  // The number of pixels to move
+  uint16_t step = 2;
+
+  if (delta > 0 && aiPaddleY >= step)
+  {
+    // Move paddle up
+    aiPaddleDirty = true;
+
+    aiPaddleY -= step;
+  }
+  if (delta < 0 && aiPaddleY + PADDLE_HEIGHT + step <= ST7735_WIDTH)
+  {
+    // Move paddle down
+    printf("delta-(%d), increasing y\n", delta);
+    aiPaddleDirty = true;
+    aiPaddleY += step;
+  }
+
   return true;
 }
 
@@ -183,7 +205,7 @@ bool accelerometerTask()
   icm20948AccelRead(&x, &y, &z);
 
   // Down = +x
-  printf("x: %.2f\n", x);
+  // printf("x: %.2f\n", x);
   const float threshold = 0.3;
 
   const bool atTop = userPaddleY <= 0;
