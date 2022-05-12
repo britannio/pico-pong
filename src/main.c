@@ -18,7 +18,6 @@ typedef enum
   Down
 } Move;
 
-void core1_entry();
 void paintGrid();
 void paintCursor();
 void paintHuman(uint8_t pos);
@@ -32,6 +31,7 @@ bool repaintTask();
 bool ballTask();
 bool userPaddleTask();
 bool aiPaddleTask();
+bool accelerometerTask();
 
 static int cursorPos = 0;
 
@@ -88,7 +88,7 @@ void startGame()
 
   // Timers
   // ---------------------------------------------------------------------------
-  const int32_t delay = -100;
+  const int32_t delay = -16;
   struct repeating_timer repaintTimer;
   add_repeating_timer_ms(delay, repaintTask, NULL, &repaintTimer);
   struct repeating_timer ballTimer;
@@ -97,6 +97,8 @@ void startGame()
   add_repeating_timer_ms(delay, userPaddleTask, NULL, &userPaddleTimer);
   struct repeating_timer aiPaddleTimer;
   add_repeating_timer_ms(delay * 2, aiPaddleTask, NULL, &aiPaddleTimer);
+  struct repeating_timer accelTimer;
+  add_repeating_timer_ms(delay, accelerometerTask, NULL, &accelTimer);
 
   while (true)
     tight_loop_contents();
@@ -131,9 +133,9 @@ bool repaintTask()
         PADDLE_WIDTH,
         ST7735_YELLOW);
   }
-  // paint vertical line to split screen
   if (lineDirty)
   {
+    // paint vertical line to split screen
     lineDirty = false;
     // Line to split the screen
     paintHorizontalLine(ST7735_HEIGHT / 2, 0, ST7735_WIDTH, ST7735_WHITE);
@@ -155,6 +157,43 @@ bool userPaddleTask()
 
 bool aiPaddleTask()
 {
+  return true;
+}
+
+bool accelerometerTask()
+{
+  float x;
+  float y;
+  float z;
+
+  // Use the addresses of our variables.
+  // This function sets data at a pointer, so we give it three pointers.
+  icm20948AccelRead(&x, &y, &z);
+
+  // Down = +x
+  printf("x: %.2f\n", x);
+  const float threshold = 0.4;
+
+  const bool atTop = userPaddleY <= 0;
+  const bool atBottom = userPaddleY >= MAX_PADDLE_Y;
+
+  // The number of pixels to move if the device is tilted.
+  const uint16_t step = 2;
+
+  // Detect action
+  if (x > threshold && !atBottom)
+  {
+    // Move down
+    userPaddleDirty = true;
+    userPaddleY += step;
+  }
+  else if (x < -threshold && !atTop)
+  {
+    // Move up
+    userPaddleDirty = true;
+    userPaddleY -= step;
+  }
+
   return true;
 }
 
@@ -305,47 +344,4 @@ void paintGameOverText()
   const uint16_t inset = 8;
   ST7735_WriteString(inset, y, "GAME", Font_16x26, ST7735_RED, ST7735_BLACK);
   ST7735_WriteString(inset, y + textHeight, "OVER", Font_16x26, ST7735_RED, ST7735_BLACK);
-}
-
-// The second core (core 1) reads accelerometer data, converts it to
-// (left/right/up/down) then puts it onto the multicore queue where the first
-// core can receive it.
-void core1_entry()
-{
-  float x;
-  float y;
-  float z;
-  printf("Running core1_entry()\n");
-
-  while (true)
-  {
-    sleep_ms(500);
-    // Use the addresses of our variables.
-    // This function sets data at a pointer, so we give it three pointers.
-    icm20948AccelRead(&x, &y, &z);
-    // Left = +x
-    // Up = +y
-    // printf("x\ty\n%.2f\t%.2f\n", x, y);
-
-    const float xThreshold = 0.6;
-    const float yThreshold = 0.4;
-    Move move = -1;
-
-    // Detect action
-    if (x > xThreshold)
-      move = Left;
-    else if (x < -xThreshold)
-      move = Right;
-    else if (y > yThreshold)
-      move = Up;
-    else if (y < -yThreshold)
-      move = Down;
-
-    if (move == -1)
-    {
-      continue;
-    }
-
-    multicore_fifo_push_blocking(move);
-  }
 }
