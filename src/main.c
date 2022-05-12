@@ -6,14 +6,17 @@
 #include "lib/st7735.h"
 #include "lib/ICM20948.h"
 #include "pico/multicore.h"
+#include "hardware/watchdog.h"
 
 void paintGameOverText();
 void startGame();
+void restartGame();
 bool repaintTask();
 bool ballTask();
 bool userPaddleTask();
 bool aiPaddleTask();
 bool accelerometerTask();
+bool monitoringTask();
 void paintBall();
 void paintAiPaddle();
 void paintUserPaddle();
@@ -23,12 +26,14 @@ void paintDivider();
 #define PADDLE_HEIGHT 30
 #define MAX_PADDLE_Y (ST7735_WIDTH - PADDLE_HEIGHT)
 #define BALL_SIZE 5
+#define WATCHDOG_MILLIS 100
 
 // Components should only be repainted if they have changed in some way.
 // These flags track this.
 volatile bool userPaddleDirty = true;
 volatile bool aiPaddleDirty = true;
 
+// Game state
 volatile uint16_t userPaddleY = 0;
 volatile uint16_t aiPaddleY = 35;
 volatile uint16_t ballX = 80;
@@ -37,11 +42,23 @@ volatile uint16_t prevBallX = 80;
 volatile uint16_t prevBallY = 35;
 volatile int ballMagnitudeX = 1;
 volatile int ballMagnitudeY = 1;
+volatile bool shouldCleanReset = false;
+
+// Timers
+struct repeating_timer monitoringTimer;
+struct repeating_timer repaintTimer;
+struct repeating_timer ballTimer;
+struct repeating_timer userPaddleTimer;
+struct repeating_timer aiPaddleTimer;
 
 int main()
 {
   // INITIALISE SERIAL IN/OUTPUT
   stdio_init_all();
+
+  // ENABLE WATCHDOG
+  watchdog_enable(WATCHDOG_MILLIS, true);
+  add_repeating_timer_ms(WATCHDOG_MILLIS - 10, monitoringTask, NULL, &monitoringTimer);
 
   // INITIALISE SCREEN (https://github.com/plaaosert/st7735-guide)
   // ---------------------------------------------------------------------------
@@ -78,13 +95,10 @@ void startGame()
   // Timers
   // ---------------------------------------------------------------------------
   const int32_t tick = -16;
-  struct repeating_timer repaintTimer;
+
   add_repeating_timer_ms(tick, repaintTask, NULL, &repaintTimer);
-  struct repeating_timer ballTimer;
   add_repeating_timer_ms(tick, ballTask, NULL, &ballTimer);
-  struct repeating_timer userPaddleTimer;
   add_repeating_timer_ms(tick, userPaddleTask, NULL, &userPaddleTimer);
-  struct repeating_timer aiPaddleTimer;
   add_repeating_timer_ms(tick * 4, aiPaddleTask, NULL, &aiPaddleTimer);
 
   while (true)
@@ -116,8 +130,24 @@ bool ballTask()
     // Ball is at top or bottom so change its direction
     ballMagnitudeY = -ballMagnitudeY;
   }
-  if (ballX <= PADDLE_WIDTH || ballX + BALL_SIZE >= ST7735_HEIGHT - PADDLE_WIDTH)
+  bool onLeftEdge = ballX <= PADDLE_WIDTH;
+  bool onRightEdge = ballX + BALL_SIZE >= ST7735_HEIGHT - PADDLE_WIDTH;
+  if (onLeftEdge || onRightEdge)
   {
+    if (onLeftEdge)
+    {
+      // Check if the ball is in range of the paddle
+      bool inRange = ballY >= userPaddleY && ballY + BALL_SIZE <= userPaddleY + PADDLE_HEIGHT;
+      if (!inRange)
+        restartGame();
+    }
+    if (onRightEdge)
+    {
+      bool inRange = ballY >= aiPaddleY && ballY + BALL_SIZE <= aiPaddleY + PADDLE_HEIGHT;
+      if (!inRange)
+        restartGame();
+    }
+
     // Ball is at left or right edge so change its direction
     ballMagnitudeX = -ballMagnitudeX;
   }
@@ -196,6 +226,24 @@ bool userPaddleTask()
   return true;
 }
 
+bool monitoringTask()
+{
+  if (shouldCleanReset)
+  {
+    // Causes the watchdog to reset
+    sleep_ms(WATCHDOG_MILLIS);
+  }
+  watchdog_update();
+  return true;
+}
+
+void restartGame()
+{
+  cancel_repeating_timer(&repaintTimer);
+  ST7735_FillScreen(ST7735_RED);
+  shouldCleanReset = true;
+}
+
 void paintUserPaddle()
 {
   // Clear paddle area
@@ -250,11 +298,4 @@ void paintDivider()
   }
 }
 
-void paintGameOverText()
-{
-  const uint16_t textHeight = 26;
-  const uint16_t y = 94;
-  const uint16_t inset = 8;
-  ST7735_WriteString(inset, y, "GAME", Font_16x26, ST7735_RED, ST7735_BLACK);
-  ST7735_WriteString(inset, y + textHeight, "OVER", Font_16x26, ST7735_RED, ST7735_BLACK);
-}
+
