@@ -121,6 +121,7 @@ bool repaintTask()
   return true;
 }
 
+// Move the ball.
 bool ballTask()
 {
   // Colission detect with edges
@@ -163,6 +164,7 @@ bool ballTask()
   return true;
 }
 
+// Compare the delta between the AI paddle and the ball then move the paddle accordingly.
 bool aiPaddleTask()
 {
   uint16_t paddleCenterY = aiPaddleY + (PADDLE_HEIGHT / 2);
@@ -188,6 +190,7 @@ bool aiPaddleTask()
   return true;
 }
 
+// Use the accelerometer reading to move the user paddle.
 bool userPaddleTask()
 {
   float x;
@@ -225,6 +228,7 @@ bool userPaddleTask()
   return true;
 }
 
+// Kick the watchdog unless a clean reset was requested.
 bool monitoringTask()
 {
   if (shouldCleanReset)
@@ -236,6 +240,7 @@ bool monitoringTask()
   return true;
 }
 
+// Fill the screen red and clean reset the microcontroller.
 void restartGame()
 {
   cancel_repeating_timer(&repaintTimer);
