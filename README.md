@@ -2,6 +2,9 @@
 
 [Pong](https://en.wikipedia.org/wiki/Pong) on an Arducam Pico4ML. This was created by myself as a task for other students to attempt in the [Computer Systems II](https://www.southampton.ac.uk/courses/modules/comp2215) module.
 
+![image](https://user-images.githubusercontent.com/33752528/168276395-1f0a69d1-12d0-4c7f-a20d-d06cf8d60d68.png)
+
+
 ## How to run
 
 ```bash
