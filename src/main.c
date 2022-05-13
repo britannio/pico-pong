@@ -104,6 +104,17 @@ void startGame()
     tight_loop_contents();
 }
 
+// Fill the screen red and clean reset the microcontroller.
+void restartGame()
+{
+  cancel_repeating_timer(&repaintTimer);
+  ST7735_FillScreen(ST7735_RED);
+  shouldCleanReset = true;
+}
+
+// Tasks
+// -----------------------------------------------------------------------------
+
 bool repaintTask()
 {
   if (userPaddleDirty)
@@ -240,14 +251,9 @@ bool monitoringTask()
   return true;
 }
 
-// Fill the screen red and clean reset the microcontroller.
-void restartGame()
-{
-  cancel_repeating_timer(&repaintTimer);
-  ST7735_FillScreen(ST7735_RED);
-  shouldCleanReset = true;
-}
 
+// Painting
+// -----------------------------------------------------------------------------
 void paintUserPaddle()
 {
   // Clear area above paddle
